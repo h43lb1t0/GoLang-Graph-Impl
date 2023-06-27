@@ -33,7 +33,8 @@ func (graph *DAG) DfsTopoSort(vertex *Vertex, visited map[string]bool, curLabel 
 	*curLabel = *curLabel - 1
 }
 
-func (graph *DAG) PrintTopoSort(ordering map[string]int) {
+func (graph *DAG) PrintTopoSort() {
+	ordering := graph.TopoSort()
 	fmt.Println("Topological Sort:")
 	for k, v := range ordering {
 		fmt.Printf("%v: %v\n", k, v)

@@ -105,7 +105,7 @@ func main() {
 
 	directedGraph.PrintDijkstraDistances("1") */
 
-	graph := graph.DirectedGraph{}
+	/* graph := graph.DirectedGraph{}
 	graph.AddVertex("1")
 	graph.AddVertex("2")
 	graph.AddVertex("3")
@@ -113,10 +113,19 @@ func main() {
 	graph.AddDirectedEdge("1", "2", 1.0)
 
 	graph.PrintAdjacent()
-	graph.PrintDijkstraDistances("1")
+	graph.PrintDijkstraDistances("1") */
 
 	//directedGraph.PrintShortestPath("1", "7")
 
 	//directedGraph.PrintAdjacent()
+
+	dag := graph.DAG{}
+	dag.AddVertex("1")
+	dag.AddVertex("2")
+	dag.AddVertex("3")
+	dag.AddDirectedEdge("1", "2", 1.0)
+	dag.AddDirectedEdge("2", "3", 1.0)
+
+	dag.PrintTopoSort()
 
 }

@@ -18,6 +18,10 @@ type Vertex struct {
 	adjacent []Edge
 }
 
+func (graph *Graph) getVertecies() []*Vertex {
+	return graph.vertices
+}
+
 func (graph *Graph) AddVertex(key string) {
 	if !graph.containsVertex(graph.vertices, key) {
 		graph.vertices = append(graph.vertices, &Vertex{key: key})
