@@ -1,44 +1,61 @@
+// Package graph implements an adjacency list representation of a graph
+// with support for both directed and undirected graphs.
 package graph
 
 import (
 	"fmt"
 )
 
+// Graph represents a graph using an adjacency list representation.
+// It maintains a list of vertices and a map for O(1) vertex lookups.
 type Graph struct {
-	vertices []*Vertex
+	vertices  []*Vertex
+	vertexMap map[string]*Vertex // Map for O(1) vertex lookups
 }
 
+// Edge represents a connection between two vertices with an associated length/weight.
 type Edge struct {
 	vertex *Vertex
 	length float64
 }
 
+// Vertex represents a node in the graph with a unique key and its adjacent edges.
 type Vertex struct {
 	key      string
 	adjacent []Edge
 }
 
+// getVertecies returns the list of all vertices in the graph.
 func (graph *Graph) getVertecies() []*Vertex {
 	return graph.vertices
 }
 
+// AddVertex adds a new vertex to the graph if it doesn't already exist.
+// The vertex is identified by a unique string key.
 func (graph *Graph) AddVertex(key string) {
-	if !graph.containsVertex(graph.vertices, key) {
-		graph.vertices = append(graph.vertices, &Vertex{key: key})
-	} else {
-		fmt.Printf("Vertex %v is already added\n", key)
+	if graph.vertexMap == nil {
+		graph.vertexMap = make(map[string]*Vertex)
+	}
+
+	if _, exists := graph.vertexMap[key]; !exists {
+		vertex := &Vertex{key: key}
+		graph.vertices = append(graph.vertices, vertex)
+		graph.vertexMap[key] = vertex
 	}
 }
 
+// containsVertex checks if a vertex with the given key exists in the graph.
+// Returns true if the vertex exists, false otherwise.
 func (graph *Graph) containsVertex(s []*Vertex, k string) bool {
-	for _, v := range s {
-		if k == v.key {
-			return true
-		}
+	if graph.vertexMap == nil {
+		return false
 	}
-	return false
+	_, exists := graph.vertexMap[k]
+	return exists
 }
 
+// containsEdge checks if an edge exists between the given vertex and its adjacent vertices.
+// Returns true if the edge exists, false otherwise.
 func (graph *Graph) containsEdge(edges []Edge, k string) bool {
 	for _, edge := range edges {
 		if k == edge.vertex.key {
@@ -48,15 +65,17 @@ func (graph *Graph) containsEdge(edges []Edge, k string) bool {
 	return false
 }
 
+// getVertex returns the vertex with the given key if it exists.
+// Returns nil if no such vertex exists.
 func (graph *Graph) getVertex(k string) *Vertex {
-	for _, v := range graph.vertices {
-		if k == v.key {
-			return v
-		}
+	if graph.vertexMap == nil {
+		return nil
 	}
-	return nil
+	return graph.vertexMap[k]
 }
 
+// getEdge returns the edge to the vertex with the given key if it exists.
+// Returns nil if no such edge exists.
 func (graph *Graph) getEdge(k string) *Edge {
 	for _, v := range graph.vertices {
 		for _, edge := range v.adjacent {
@@ -68,10 +87,12 @@ func (graph *Graph) getEdge(k string) *Edge {
 	return nil
 }
 
+// NumVertices returns the total number of vertices in the graph.
 func (graph *Graph) NumVertices() int {
 	return len(graph.vertices)
 }
 
+// NumEdges returns the total number of edges in the graph.
 func (graph *Graph) NumEdges() int {
 	count := 0
 	for _, v := range graph.vertices {
@@ -84,6 +105,9 @@ func (graph *Graph) NumEdges() int {
 
 } */
 
+// BFS performs a breadth-first search starting from the given node.
+// Returns a map of node IDs to their distances from the start node.
+// The distance represents the number of edges in the shortest path.
 func (graph *Graph) BFS(nodeId string) map[string]int {
 	visited := make(map[string]bool)
 	for _, v := range graph.vertices {
@@ -92,8 +116,8 @@ func (graph *Graph) BFS(nodeId string) map[string]int {
 	return graph.BFS_intern(nodeId, visited)
 }
 
-// the returned map maps for each reachable
-// node the distance in layers from given nodeId to each node
+// BFS_intern is the internal implementation of BFS that takes a visited map.
+// Returns a map of node IDs to their distances from the start node.
 func (graph *Graph) BFS_intern(nodeId string, visited map[string]bool) map[string]int {
 
 	//fmt.Println("BFS:")
@@ -132,6 +156,8 @@ func (graph *Graph) BFS_intern(nodeId string, visited map[string]bool) map[strin
 
 }
 
+// DFS performs a depth-first search starting from the given node.
+// Returns a map of node IDs to boolean values indicating if they were visited.
 func (graph *Graph) DFS(nodeId string) map[string]bool {
 	//fmt.Println("DFS:")
 
@@ -166,6 +192,7 @@ func (graph *Graph) DFS(nodeId string) map[string]bool {
 	return visited
 }
 
+// PrintAdjacent prints the adjacency list representation of the graph.
 func (graph *Graph) PrintAdjacent() {
 	for _, v := range graph.vertices {
 		fmt.Printf("\nVertex %v : ", v.key)
@@ -176,6 +203,7 @@ func (graph *Graph) PrintAdjacent() {
 	fmt.Println()
 }
 
+// PrintDistances prints the distances from a start node to all other nodes.
 func (graph *Graph) PrintDistances(distances map[string]int) {
 	fmt.Println("Distances:")
 	for k, v := range distances {
@@ -183,6 +211,7 @@ func (graph *Graph) PrintDistances(distances map[string]int) {
 	}
 }
 
+// PrintVisited prints the visited status of all nodes after a traversal.
 func (graph *Graph) PrintVisited(visited map[string]bool) {
 	fmt.Println("Visited:")
 	for k, v := range visited {

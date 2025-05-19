@@ -100,23 +100,22 @@ func TestDijkstra(t *testing.T) {
 	graph.AddVertex("2")
 	graph.AddVertex("3")
 	graph.AddDirectedEdge("2", "1", 1.0)
-	graph.AddDirectedEdge("1", "2", 1.0)
+	graph.AddDirectedEdge("1", "2", 2.0)
 	graph.AddVertex("3")
 	Distances := graph.Dijkstra("1")
 
 	expectedDistances := make(map[string]float64)
 	expectedDistances["1"] = 0.0
-	expectedDistances["2"] = 1.0
+	expectedDistances["2"] = 2.0
 	expectedDistances["3"] = math.Inf(1)
 
-	if len(Distances) != len(expectedDistances) && len(Distances) > 0 {
+	if len(Distances) == len(expectedDistances) {
 		for id, d := range Distances {
 			if expectedDistances[id] != d {
-				t.Errorf("Dijkstra method error")
+				t.Errorf("Dijkstra method error: expected distance %v for node %v, got %v", expectedDistances[id], id, d)
 			}
 		}
 	} else {
-		t.Errorf("Dijkstra method error")
-
+		t.Errorf("Dijkstra method error: expected %d distances, got %d", len(expectedDistances), len(Distances))
 	}
 }
