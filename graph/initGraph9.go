@@ -89,6 +89,10 @@ func InitWebgraph() *DirectedGraph {
 	return &webgraph
 }
 
+func initProblem98test() *UnDirectedGraph {
+
+}
+
 func printEstimatedRemainingTime(start time.Time, numProcessed int) {
 	total := -1
 	if total == -1 {
