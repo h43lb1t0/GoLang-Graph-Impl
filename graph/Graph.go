@@ -4,6 +4,7 @@ package graph
 
 import (
 	"fmt"
+	"math"
 )
 
 // Graph represents a graph using an adjacency list representation.
@@ -216,5 +217,71 @@ func (graph *Graph) PrintVisited(visited map[string]bool) {
 	fmt.Println("Visited:")
 	for k, v := range visited {
 		fmt.Printf("Node %v: %v\n", k, v)
+	}
+}
+
+// Dijkstra performs Dijkstra's shortest path algorithm starting from the given node.
+// Returns a map of node IDs to their distances from the start node.
+// The distance represents the length of the shortest path.
+func (graph *Graph) Dijkstra(start string) map[string]float64 {
+	if !graph.containsVertex(graph.vertices, start) {
+		fmt.Printf("Start node %v does not exist\n", start)
+		return nil
+	}
+
+	distances := make(map[string]float64)
+	visited := make(map[string]bool)
+
+	// Initialize distances to infinity and visited to false
+	for _, vertex := range graph.vertices {
+		distances[vertex.key] = math.Inf(1)
+		visited[vertex.key] = false
+	}
+
+	// Set start node distance to 0
+	distances[start] = 0
+
+	// Create and initialize min heap
+	heap := newMinHeap(graph.NumVertices())
+	heap.enqueue(&HeapNode{NodeId: start, Distance: 0})
+
+	// Main Dijkstra loop
+	for len(heap.nodes) > 0 {
+		minHeapNode := heap.dequeue()
+		currentNode := minHeapNode.NodeId
+
+		if !visited[currentNode] {
+			visited[currentNode] = true
+
+			// Process all adjacent vertices
+			for _, edge := range graph.getVertex(currentNode).adjacent {
+				neighbor := edge.vertex.key
+				if !visited[neighbor] {
+					newDistance := distances[currentNode] + edge.length
+					if newDistance < distances[neighbor] {
+						distances[neighbor] = newDistance
+						heap.enqueue(&HeapNode{NodeId: neighbor, Distance: newDistance})
+					}
+				}
+			}
+		}
+	}
+
+	return distances
+}
+
+// PrintDijkstraDistances prints the distances from a start node to all other nodes.
+func (graph *Graph) PrintDijkstraDistances(start string) {
+	distances := graph.Dijkstra(start)
+	if distances != nil {
+		for node, distance := range distances {
+			if math.IsInf(distance, 1) {
+				fmt.Printf("From %v to %v: INFINITY\n", start, node)
+			} else {
+				fmt.Printf("From %v to %v: Distance %v\n", start, node, distance)
+			}
+		}
+	} else {
+		fmt.Println("Start node does not exist, no distances to print.")
 	}
 }
