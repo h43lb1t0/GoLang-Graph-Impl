@@ -105,3 +105,75 @@ func TestUCC(t *testing.T) {
 		t.Errorf("UCC method error")
 	}
 }
+
+func TestDijkstraUndirected(t *testing.T) {
+	graph := graph.UnDirectedGraph{}
+	graph.AddVertex("1")
+	graph.AddVertex("2")
+	graph.AddVertex("3")
+	graph.AddUndirectedEdge("1", "2", 2.0)
+	graph.AddUndirectedEdge("2", "3", 3.0)
+	graph.AddUndirectedEdge("1", "3", 6.0)
+
+	distances := graph.Dijkstra("1")
+
+	expectedDistances := make(map[string]float64)
+	expectedDistances["1"] = 0.0
+	expectedDistances["2"] = 2.0
+	expectedDistances["3"] = 5.0 // Should go through node 2
+
+	if len(distances) == len(expectedDistances) {
+		for id, d := range distances {
+			if expectedDistances[id] != d {
+				t.Errorf("Dijkstra method error: expected distance %v for node %v, got %v", expectedDistances[id], id, d)
+			}
+		}
+	} else {
+		t.Errorf("Dijkstra method error: expected %d distances, got %d", len(expectedDistances), len(distances))
+	}
+}
+
+func TestDijkstraUndirectedComplex(t *testing.T) {
+	graph := graph.UnDirectedGraph{}
+
+	// Create a more complex undirected graph
+	graph.AddVertex("A")
+	graph.AddVertex("B")
+	graph.AddVertex("C")
+	graph.AddVertex("D")
+	graph.AddVertex("E")
+	graph.AddVertex("F")
+
+	// Add edges with different weights
+	graph.AddUndirectedEdge("A", "B", 4.0)
+	graph.AddUndirectedEdge("A", "C", 2.0)
+	graph.AddUndirectedEdge("B", "C", 1.0)
+	graph.AddUndirectedEdge("B", "D", 5.0)
+	graph.AddUndirectedEdge("C", "D", 8.0)
+	graph.AddUndirectedEdge("C", "E", 10.0)
+	graph.AddUndirectedEdge("D", "E", 2.0)
+	graph.AddUndirectedEdge("D", "F", 6.0)
+	graph.AddUndirectedEdge("E", "F", 3.0)
+
+	// Calculate shortest paths from vertex A
+	distances := graph.Dijkstra("A")
+
+	// Expected shortest path distances from A
+	expectedDistances := make(map[string]float64)
+	expectedDistances["A"] = 0.0  // Distance to self
+	expectedDistances["B"] = 3.0  // A -> C -> B
+	expectedDistances["C"] = 2.0  // A -> C
+	expectedDistances["D"] = 8.0  // A -> C -> B -> D
+	expectedDistances["E"] = 10.0 // A -> C -> B -> D -> E
+	expectedDistances["F"] = 13.0 // A -> C -> B -> D -> E -> F
+
+	if len(distances) == len(expectedDistances) {
+		for id, d := range distances {
+			if expectedDistances[id] != d {
+				t.Errorf("Dijkstra method error: expected distance %v for node %v, got %v", expectedDistances[id], id, d)
+			}
+		}
+	} else {
+		t.Errorf("Dijkstra method error: expected %d distances, got %d", len(expectedDistances), len(distances))
+	}
+}

@@ -220,51 +220,58 @@ func (graph *Graph) PrintVisited(visited map[string]bool) {
 	}
 }
 
-func (graph *DirectedGraph) Dijkstra(start string) map[string]float64 {
+// Dijkstra performs Dijkstra's shortest path algorithm starting from the given node.
+// Returns a map of node IDs to their distances from the start node.
+// The distance represents the length of the shortest path.
+func (graph *Graph) Dijkstra(start string) map[string]float64 {
+	if !graph.containsVertex(graph.vertices, start) {
+		fmt.Printf("Start node %v does not exist\n", start)
+		return nil
+	}
 
-	if graph.containsVertex(graph.vertices, start) {
+	distances := make(map[string]float64)
+	visited := make(map[string]bool)
 
-		Distances := make(map[string]float64)
+	// Initialize distances to infinity and visited to false
+	for _, vertex := range graph.vertices {
+		distances[vertex.key] = math.Inf(1)
+		visited[vertex.key] = false
+	}
 
-		visted := make(map[string]bool)
+	// Set start node distance to 0
+	distances[start] = 0
 
-		for _, vertex := range graph.vertices {
-			Distances[vertex.key] = math.Inf(1)
-			visted[vertex.key] = false
-		}
+	// Create and initialize min heap
+	heap := newMinHeap(graph.NumVertices())
+	heap.enqueue(&HeapNode{NodeId: start, Distance: 0})
 
-		Distances[start] = 0
+	// Main Dijkstra loop
+	for len(heap.nodes) > 0 {
+		minHeapNode := heap.dequeue()
+		currentNode := minHeapNode.NodeId
 
-		heap := newMinHeap(graph.NumVertices())
-		heap.enqueue(&HeapNode{NodeId: start, Distance: 0})
+		if !visited[currentNode] {
+			visited[currentNode] = true
 
-		for len(heap.nodes) > 0 {
-			minHeapNode := heap.dequeue()
-			currentHeapNode := minHeapNode.NodeId
-			if !visted[currentHeapNode] {
-				visted[currentHeapNode] = true
-				for _, edge := range graph.getVertex(currentHeapNode).adjacent {
-					neighbour := edge.vertex.key
-					if !visted[neighbour] {
-						newDistance := Distances[currentHeapNode] + edge.length
-						if newDistance < Distances[neighbour] {
-							Distances[neighbour] = newDistance
-							heap.enqueue(&HeapNode{NodeId: neighbour, Distance: newDistance})
-						}
-
+			// Process all adjacent vertices
+			for _, edge := range graph.getVertex(currentNode).adjacent {
+				neighbor := edge.vertex.key
+				if !visited[neighbor] {
+					newDistance := distances[currentNode] + edge.length
+					if newDistance < distances[neighbor] {
+						distances[neighbor] = newDistance
+						heap.enqueue(&HeapNode{NodeId: neighbor, Distance: newDistance})
 					}
 				}
 			}
-
 		}
-
-		return Distances
 	}
-	fmt.Printf("Start node %v does not exist\n", start)
-	return nil
+
+	return distances
 }
 
-func (graph *DirectedGraph) PrintDijkstraDistances(start string) {
+// PrintDijkstraDistances prints the distances from a start node to all other nodes.
+func (graph *Graph) PrintDijkstraDistances(start string) {
 	distances := graph.Dijkstra(start)
 	if distances != nil {
 		for node, distance := range distances {
