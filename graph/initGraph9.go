@@ -11,6 +11,10 @@ import (
 	"time"
 )
 
+// initGraph9 initializes an undirected graph from a file with a specific format.
+// The file should contain lines where each line represents a vertex and its edges.
+// Format: vertex_id edge1_id,weight1 edge2_id,weight2 ...
+// Returns a pointer to the initialized UnDirectedGraph.
 func initGraph9(filename string) *UnDirectedGraph {
 	graph := &UnDirectedGraph{}
 
@@ -42,6 +46,9 @@ func initGraph9(filename string) *UnDirectedGraph {
 	return graph
 }
 
+// InitProblem98test initializes a test graph for problem 9.8.
+// It reads the graph data from "testdata/problem9.8test.txt".
+// Returns a pointer to the initialized UnDirectedGraph.
 func InitProblem98test() *UnDirectedGraph {
 	wd, err := os.Getwd()
 	if err != nil {
@@ -54,6 +61,9 @@ func InitProblem98test() *UnDirectedGraph {
 	return initGraph9(filepath.Join(wd, "testdata", "problem9.8test.txt"))
 }
 
+// InitProblem98 initializes the main graph for problem 9.8.
+// It reads the graph data from "testdata/problem9.8.txt".
+// Returns a pointer to the initialized UnDirectedGraph.
 func InitProblem98() *UnDirectedGraph {
 	wd, err := os.Getwd()
 	if err != nil {
@@ -62,6 +72,11 @@ func InitProblem98() *UnDirectedGraph {
 	return initGraph9(filepath.Join(wd, "testdata", "problem9.8.txt"))
 }
 
+// InitWebgraph initializes a directed graph from the Google web graph dataset.
+// The dataset should be in the format of "testdata/web-Google.txt".
+// Each line represents a directed edge from source to target vertex.
+// The function includes progress tracking and time estimation.
+// Returns a pointer to the initialized DirectedGraph.
 func InitWebgraph() *DirectedGraph {
 	// for a sanity check:
 	//     count on the command line the number of edges and vertices by
@@ -102,6 +117,11 @@ func InitWebgraph() *DirectedGraph {
 	return &webgraph
 }
 
+// printEstimatedRemainingTime calculates and prints the estimated time remaining
+// for processing the web graph based on the current processing rate.
+// Parameters:
+//   - start: The start time of the processing
+//   - numProcessed: The number of lines processed so far
 func printEstimatedRemainingTime(start time.Time, numProcessed int) {
 	total := -1
 	if total == -1 {
@@ -114,6 +134,13 @@ func printEstimatedRemainingTime(start time.Time, numProcessed int) {
 	fmt.Printf("Estimated remaining time: %s\n", time.Duration(estimatedTimeRemaining)*time.Second)
 }
 
+// countLines counts the number of lines in a file using the 'wc' command.
+// Parameters:
+//   - filepath: The path to the file to count lines in
+//
+// Returns:
+//   - int: The number of lines in the file
+//   - error: Any error that occurred during the operation
 func countLines(filepath string) (int, error) {
 	out, err := exec.Command("wc", "-l", filepath).Output()
 	if err != nil {
