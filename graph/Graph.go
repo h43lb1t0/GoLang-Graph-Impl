@@ -286,6 +286,8 @@ func (graph *Graph) PrintDijkstraDistances(start string) {
 	}
 }
 
+// PrintDijkstraFromTo prints the shortest path distance between two specific nodes.
+// If no path exists, it prints "NO PATH". If the nodes don't exist, it prints nothing.
 func (graph *Graph) PrintDijkstraFromTo(start string, end string) {
 	distances := graph.Dijkstra(start)
 	if distances != nil {

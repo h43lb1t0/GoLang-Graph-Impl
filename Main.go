@@ -14,11 +14,13 @@ func problem98() {
 	}
 }
 
+// Print the shortest path from the webgraph
 func webgraph() {
 	graph := graph.InitWebgraph()
 	graph.PrintDijkstraDistances("1")
 }
 
+// Main function with different tasks to uncomment and run
 func main() {
 
 	problem98()
