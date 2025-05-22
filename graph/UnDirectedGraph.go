@@ -2,11 +2,22 @@ package graph
 
 import "fmt"
 
+// UnDirectedGraph represents an undirected graph data structure.
+// It extends the base Graph type and maintains an additional edgeMap
+// for O(1) edge lookups between vertices.
 type UnDirectedGraph struct {
 	Graph
 	edgeMap map[string]map[string]float64 // Map for O(1) edge lookups: from -> to -> length
 }
 
+// AddUndirectedEdge adds an undirected edge between two vertices with the specified length.
+// If either vertex doesn't exist or the edge already exists, appropriate messages are printed.
+// The edge is added in both directions since this is an undirected graph.
+//
+// Parameters:
+//   - nodeId1: The ID of the first vertex
+//   - nodeId2: The ID of the second vertex
+//   - length: The length/weight of the edge
 func (graph *UnDirectedGraph) AddUndirectedEdge(nodeId1, nodeId2 string, length float64) {
 	if graph.edgeMap == nil {
 		graph.edgeMap = make(map[string]map[string]float64)
@@ -38,6 +49,11 @@ func (graph *UnDirectedGraph) AddUndirectedEdge(nodeId1, nodeId2 string, length 
 	}
 }
 
+// UCC (Undirected Connected Components) identifies all connected components in the graph.
+// It uses BFS to explore each component and assigns a unique component ID to each vertex.
+//
+// Returns:
+//   - A map where keys are vertex IDs and values are their component IDs
 func (graph *UnDirectedGraph) UCC() map[string]int {
 	components := make(map[string]int)
 	commpId := 0
@@ -59,6 +75,11 @@ func (graph *UnDirectedGraph) UCC() map[string]int {
 	return components
 }
 
+// PrintUCC prints the connected components of the graph in a human-readable format.
+// It displays which vertices belong to which components.
+//
+// Parameters:
+//   - components: A map containing the component assignments for each vertex
 func (graph *UnDirectedGraph) PrintUCC(components map[string]int) {
 	fmt.Println("Connected Components:")
 	for k, v := range components {
