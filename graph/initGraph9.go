@@ -5,48 +5,61 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
 )
 
-// ParseGraphFromFile parses the given file to create a DirectedGraph.
-func ParseGraphFromFile(filename string) *DirectedGraph {
-	file, _ := os.Open(filename)
+func initGraph9(filename string) *UnDirectedGraph {
+	graph := &UnDirectedGraph{}
 
+	file, ok := os.Open(filename)
+	if ok != nil {
+		errorString := fmt.Sprintf("Can't open file %s", filename)
+		panic(errorString)
+	}
 	defer file.Close()
 
-	graph := &DirectedGraph{}
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
-		line := scanner.Text()
-		fields := strings.Fields(line)
-		if len(fields) < 1 {
-			continue
-		}
-
-		from, _ := strconv.Atoi(fields[0])
-
-		fromKey := fmt.Sprintf("%d", from)
-		graph.AddVertex(fromKey)
-
-		for _, field := range fields[1:] {
-			parts := strings.Split(field, ",")
-			if len(parts) != 2 {
-				continue
+		s := scanner.Text()
+		fields := strings.Fields(s)
+		id1 := fields[0]
+		graph.AddVertex(id1)
+		for _, x := range fields[1:] {
+			f := strings.Split(x, ",") // f[0]:id2 ,,
+			var length float64         //edgeLength
+			if l, err := strconv.ParseFloat(f[1], 64); err == nil {
+				length = l //edgeLength{float64: l}
+			} else {
+				panic("convert str2float failed!")
 			}
-
-			to, _ := strconv.Atoi(parts[0])
-
-			length, _ := strconv.ParseFloat(parts[1], 64)
-
-			toKey := fmt.Sprintf("%d", to)
-			graph.AddVertex(toKey)
-			graph.AddDirectedEdge(fromKey, toKey, length)
+			graph.AddVertex(f[0])
+			graph.AddUndirectedEdge(id1, f[0], length)
 		}
 	}
-
 	return graph
+}
+
+func InitProblem98test() *UnDirectedGraph {
+	wd, err := os.Getwd()
+	if err != nil {
+		panic("Could not get working directory")
+	}
+	// If we're in the tests directory, go up one level
+	if filepath.Base(wd) == "tests" {
+		wd = filepath.Dir(wd)
+	}
+	return initGraph9(filepath.Join(wd, "testdata", "problem9.8test.txt"))
+}
+
+func InitProblem98() *UnDirectedGraph {
+	wd, err := os.Getwd()
+	if err != nil {
+		panic("Could not get working directory")
+	}
+	return initGraph9(filepath.Join(wd, "testdata", "problem9.8.txt"))
 }
 
 func InitWebgraph() *DirectedGraph {

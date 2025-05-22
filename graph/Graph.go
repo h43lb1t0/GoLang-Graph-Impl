@@ -285,3 +285,14 @@ func (graph *Graph) PrintDijkstraDistances(start string) {
 		fmt.Println("Start node does not exist, no distances to print.")
 	}
 }
+
+func (graph *Graph) PrintDijkstraFromTo(start string, end string) {
+	distances := graph.Dijkstra(start)
+	if distances != nil {
+		if math.IsInf(distances[end], 1) {
+			fmt.Printf("From %v to %v: NO PATH\n", start, end)
+		} else {
+			fmt.Printf("From %v to %v: Distance %v\n", start, end, distances[end])
+		}
+	}
+}
