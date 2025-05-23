@@ -3,7 +3,7 @@ package main
 import "AbgabeAlgo/graph"
 
 // Print the shortest path from the task
-func problem98() {
+func problem98Challange() {
 	var endNodes = []string{
 		"7", "37", "59", "82", "99", "115", "133", "165", "188", "197",
 	}
@@ -23,7 +23,7 @@ func webgraph() {
 // Main function with different tasks to uncomment and run
 func main() {
 
-	//problem98()
+	//problem98Challange()
 	webgraph()
 
 }
