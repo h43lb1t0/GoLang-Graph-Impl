@@ -4,11 +4,9 @@ import (
 	"bufio"
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strconv"
 	"strings"
-	"time"
 )
 
 // initGraph9 initializes an undirected graph from a file with a specific format.
@@ -18,6 +16,12 @@ import (
 func initGraph9(filename string) *UnDirectedGraph {
 	graph := &UnDirectedGraph{}
 
+	// Count total lines first
+	totalLines, err := countLines(filename)
+	if err != nil {
+		panic(fmt.Sprintf("Can't count lines in file %s: %v", filename, err))
+	}
+
 	file, ok := os.Open(filename)
 	if ok != nil {
 		errorString := fmt.Sprintf("Can't open file %s", filename)
@@ -26,9 +30,14 @@ func initGraph9(filename string) *UnDirectedGraph {
 	defer file.Close()
 
 	scanner := bufio.NewScanner(file)
+	validLines := 0
+	nextPercent := 5
 	for scanner.Scan() {
 		s := scanner.Text()
 		fields := strings.Fields(s)
+		if len(fields) == 0 {
+			continue
+		}
 		id1 := fields[0]
 		graph.AddVertex(id1)
 		for _, x := range fields[1:] {
@@ -41,6 +50,16 @@ func initGraph9(filename string) *UnDirectedGraph {
 			}
 			graph.AddVertex(f[0])
 			graph.AddUndirectedEdge(id1, f[0], length)
+		}
+
+		validLines++
+		// Print percentage progress every 5% or every 50,000 valid lines
+		percentDone := int(float64(validLines) / float64(totalLines) * 100)
+		if percentDone >= nextPercent || validLines%50000 == 0 {
+			fmt.Printf("Progress: %d%% (%d/%d lines)\n", percentDone, validLines, totalLines)
+			if percentDone >= nextPercent {
+				nextPercent += 5
+			}
 		}
 	}
 	return graph
@@ -91,17 +110,21 @@ func InitWebgraph() *DirectedGraph {
 	}
 	filepath := filepath.Join(wd, "testdata", "web-Google.txt")
 
+	// Count total lines first
+	totalLines, err := countLines(filepath)
+	if err != nil {
+		panic(fmt.Sprintf("Could not count lines in file %s: %v", filepath, err))
+	}
+
 	file, err := os.Open(filepath)
 	if err != nil {
 		panic(fmt.Sprintf("Could not open file %s: %v", filepath, err))
 	}
 	defer file.Close()
 
-	fmt.Println("reading file")
-
 	scanner := bufio.NewScanner(file)
-	i := 1
-	start := time.Now()
+	validLines := 0
+	nextPercent := 5
 	for scanner.Scan() {
 		s := scanner.Text()
 		// Skip comment lines and empty lines
@@ -113,6 +136,8 @@ func InitWebgraph() *DirectedGraph {
 			continue
 		}
 
+		validLines++
+
 		// Only add vertices if they don't exist
 		if !webgraph.containsVertex(webgraph.vertices, fields[0]) {
 			webgraph.AddVertex(fields[0])
@@ -122,40 +147,20 @@ func InitWebgraph() *DirectedGraph {
 		}
 		webgraph.AddDirectedEdge(fields[0], fields[1], 1.)
 
-		if (i % 1000000) == 0 {
-			elapsed := time.Since(start)
-			fmt.Printf("last took %s\n", elapsed)
-			fmt.Printf("progess: %v\n", i)
-			start = time.Now()
+		// Print percentage progress every 5% or every 50,000 valid lines
+		percentDone := int(float64(validLines) / float64(totalLines) * 100)
+		if percentDone >= nextPercent || validLines%50000 == 0 {
+			fmt.Printf("Progress: %d%% (%d/%d lines)\n", percentDone, validLines, totalLines)
+			if percentDone >= nextPercent {
+				nextPercent += 5
+			}
 		}
-		if (i % 50000) == 0 {
-			printEstimatedRemainingTime(start, i)
-		}
-		i++
 	}
-	fmt.Printf("%v lines processed\n", i)
 
 	return &webgraph
 }
 
-// printEstimatedRemainingTime calculates and prints the estimated time remaining
-// for processing the web graph based on the current processing rate.
-// Parameters:
-//   - start: The start time of the processing
-//   - numProcessed: The number of lines processed so far
-func printEstimatedRemainingTime(start time.Time, numProcessed int) {
-	total := -1
-	if total == -1 {
-		total, _ = countLines("./testdata/web-Google.txt")
-	}
-	elapsed := time.Since(start)
-	rate := float64(numProcessed) / elapsed.Seconds()   // processing rate in lines per second
-	remaining := total - numProcessed                   // remaining lines to process
-	estimatedTimeRemaining := float64(remaining) / rate // estimated remaining time in seconds
-	fmt.Printf("Estimated remaining time: %s\n", time.Duration(estimatedTimeRemaining)*time.Second)
-}
-
-// countLines counts the number of lines in a file using the 'wc' command.
+// countLines counts the number of lines in a file.
 // Parameters:
 //   - filepath: The path to the file to count lines in
 //
@@ -163,14 +168,22 @@ func printEstimatedRemainingTime(start time.Time, numProcessed int) {
 //   - int: The number of lines in the file
 //   - error: Any error that occurred during the operation
 func countLines(filepath string) (int, error) {
-	out, err := exec.Command("wc", "-l", filepath).Output()
+	file, err := os.Open(filepath)
 	if err != nil {
 		return 0, err
 	}
+	defer file.Close()
 
-	// The output will be something like "200 filename", so we need to parse out the number
-	split := strings.Split(string(out), " ")
-	lines, err := strconv.Atoi(split[0])
-	fmt.Printf("lines: %v\n", lines)
-	return lines, err
+	scanner := bufio.NewScanner(file)
+	lineCount := 0
+	for scanner.Scan() {
+		lineCount++
+	}
+
+	if err := scanner.Err(); err != nil {
+		return 0, err
+	}
+
+	fmt.Printf("Total lines: %v\n", lineCount)
+	return lineCount, nil
 }
