@@ -72,10 +72,21 @@ func parseInt(s string) int {
 	return i
 }
 
-// Compare the Dijkstra implementation with gonum's implementation
-// starting from Vertex 1
-// using the web-Google.txt file
-func TestDijkstraCorrectnessWithGonumAsComperrasion(t *testing.T) {
+var (
+	testResults *testDijkstraResults
+)
+
+// testDijkstraResults holds the results of running Dijkstra's algorithm on both implementations
+type testDijkstraResults struct {
+	ourDistances  map[string]float64
+	gonumDijkstra path.Shortest
+	gonumGraph    *simple.DirectedGraph
+	ourCount      int
+	gonumCount    int
+}
+
+// runDijkstraOnBothImplementations runs Dijkstra's algorithm on both our implementation and Gonum's
+func runDijkstraOnBothImplementations(t *testing.T) *testDijkstraResults {
 	const START = "1"
 	// Load the web graph into both implementations
 	gonumGraph := loadGonumGraph("web-Google.txt")
@@ -90,7 +101,6 @@ func TestDijkstraCorrectnessWithGonumAsComperrasion(t *testing.T) {
 	// Run Gonum's Dijkstra implementation
 	gonumDijkstra := path.DijkstraFrom(simple.Node(parseInt(START)), gonumGraph)
 
-	// Checking if the same amount of nodes are reachable
 	// Count reachable nodes in our implementation
 	ourCount := 0
 	for _, dist := range ourDistances {
@@ -98,6 +108,8 @@ func TestDijkstraCorrectnessWithGonumAsComperrasion(t *testing.T) {
 			ourCount++
 		}
 	}
+
+	// Count reachable nodes in Gonum's implementation
 	gonumNodes := gonumGraph.Nodes()
 	gonumCount := 0
 	for gonumNodes.Next() {
@@ -106,12 +118,33 @@ func TestDijkstraCorrectnessWithGonumAsComperrasion(t *testing.T) {
 			gonumCount++
 		}
 	}
-	if ourCount != gonumCount {
-		t.Errorf("Our implementation found %d reachable nodes, but Gonum found %d", ourCount, gonumCount)
-	}
 
-	// Compare the results
-	for node := range ourDistances {
+	return &testDijkstraResults{
+		ourDistances:  ourDistances,
+		gonumDijkstra: gonumDijkstra,
+		gonumGraph:    gonumGraph,
+		ourCount:      ourCount,
+		gonumCount:    gonumCount,
+	}
+}
+
+func TestMain(m *testing.M) {
+	// Setup: Run Dijkstra's algorithm once
+	testResults = runDijkstraOnBothImplementations(&testing.T{})
+
+	// Run all tests
+	os.Exit(m.Run())
+}
+
+func TestDijkstraReachableNodesCount(t *testing.T) {
+	if testResults.ourCount != testResults.gonumCount {
+		t.Errorf("Our implementation found %d reachable nodes, but Gonum found %d",
+			testResults.ourCount, testResults.gonumCount)
+	}
+}
+
+func TestDijkstraDistanceComparison(t *testing.T) {
+	for node := range testResults.ourDistances {
 		// Convert our node ID to int64 for Gonum
 		nodeID, err := strconv.ParseInt(node, 10, 64)
 		if err != nil {
@@ -120,33 +153,33 @@ func TestDijkstraCorrectnessWithGonumAsComperrasion(t *testing.T) {
 		}
 
 		// Get distance from Gonum
-		gonumDist := gonumDijkstra.WeightTo(nodeID)
+		gonumDist := testResults.gonumDijkstra.WeightTo(nodeID)
 
 		// If Gonum can't reach the node but we can, or vice versa, that's an error
-		if math.IsInf(gonumDist, 1) && !math.IsInf(ourDistances[node], 1) {
+		if math.IsInf(gonumDist, 1) && !math.IsInf(testResults.ourDistances[node], 1) {
 			t.Errorf("Gonum can't reach node %s but our implementation can", node)
 		}
-		if !math.IsInf(gonumDist, 1) && math.IsInf(ourDistances[node], 1) {
+		if !math.IsInf(gonumDist, 1) && math.IsInf(testResults.ourDistances[node], 1) {
 			t.Errorf("Our implementation can't reach node %s but Gonum can", node)
 		}
 
 		// If both can reach the node, compare distances
-		if !math.IsInf(gonumDist, 1) && !math.IsInf(ourDistances[node], 1) {
+		if !math.IsInf(gonumDist, 1) && !math.IsInf(testResults.ourDistances[node], 1) {
 			// Allow for small floating point differences
-			if math.Abs(gonumDist-ourDistances[node]) > 1e-10 {
+			if math.Abs(gonumDist-testResults.ourDistances[node]) > 1e-10 {
 				t.Errorf("Distance mismatch for node %s: our implementation=%v, Gonum=%v",
-					node, ourDistances[node], gonumDist)
-				break
+					node, testResults.ourDistances[node], gonumDist)
 			}
 		}
 	}
+}
 
-	// Also check nodes that Gonum can reach but our implementation might not
-	gonumNodes = gonumGraph.Nodes()
+func TestDijkstraNodeExistence(t *testing.T) {
+	gonumNodes := testResults.gonumGraph.Nodes()
 	for gonumNodes.Next() {
 		node := gonumNodes.Node().(simple.Node)
 		nodeStr := strconv.FormatInt(int64(node), 10)
-		if _, exists := ourDistances[nodeStr]; !exists {
+		if _, exists := testResults.ourDistances[nodeStr]; !exists {
 			t.Errorf("Our implementation didn't find node %s that exists in Gonum's graph", nodeStr)
 		}
 	}
