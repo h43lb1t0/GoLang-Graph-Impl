@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -91,6 +90,12 @@ func InitWebgraph() *DirectedGraph {
 	}
 	filepath := filepath.Join(wd, "testdata", "web-Google.txt")
 
+	// Count total lines first
+	totalLines, err := countLines(filepath)
+	if err != nil {
+		panic(fmt.Sprintf("Could not count lines in file %s: %v", filepath, err))
+	}
+
 	file, err := os.Open(filepath)
 	if err != nil {
 		panic(fmt.Sprintf("Could not open file %s: %v", filepath, err))
@@ -129,7 +134,7 @@ func InitWebgraph() *DirectedGraph {
 			start = time.Now()
 		}
 		if (i % 50000) == 0 {
-			printEstimatedRemainingTime(start, i)
+			printEstimatedRemainingTime(start, i, totalLines)
 		}
 		i++
 	}
@@ -143,19 +148,16 @@ func InitWebgraph() *DirectedGraph {
 // Parameters:
 //   - start: The start time of the processing
 //   - numProcessed: The number of lines processed so far
-func printEstimatedRemainingTime(start time.Time, numProcessed int) {
-	total := -1
-	if total == -1 {
-		total, _ = countLines("./testdata/web-Google.txt")
-	}
+//   - totalLines: The total number of lines to process
+func printEstimatedRemainingTime(start time.Time, numProcessed int, totalLines int) {
 	elapsed := time.Since(start)
 	rate := float64(numProcessed) / elapsed.Seconds()   // processing rate in lines per second
-	remaining := total - numProcessed                   // remaining lines to process
+	remaining := totalLines - numProcessed              // remaining lines to process
 	estimatedTimeRemaining := float64(remaining) / rate // estimated remaining time in seconds
 	fmt.Printf("Estimated remaining time: %s\n", time.Duration(estimatedTimeRemaining)*time.Second)
 }
 
-// countLines counts the number of lines in a file using the 'wc' command.
+// countLines counts the number of lines in a file.
 // Parameters:
 //   - filepath: The path to the file to count lines in
 //
@@ -163,14 +165,22 @@ func printEstimatedRemainingTime(start time.Time, numProcessed int) {
 //   - int: The number of lines in the file
 //   - error: Any error that occurred during the operation
 func countLines(filepath string) (int, error) {
-	out, err := exec.Command("wc", "-l", filepath).Output()
+	file, err := os.Open(filepath)
 	if err != nil {
 		return 0, err
 	}
+	defer file.Close()
 
-	// The output will be something like "200 filename", so we need to parse out the number
-	split := strings.Split(string(out), " ")
-	lines, err := strconv.Atoi(split[0])
-	fmt.Printf("lines: %v\n", lines)
-	return lines, err
+	scanner := bufio.NewScanner(file)
+	lineCount := 0
+	for scanner.Scan() {
+		lineCount++
+	}
+
+	if err := scanner.Err(); err != nil {
+		return 0, err
+	}
+
+	fmt.Printf("Total lines: %v\n", lineCount)
+	return lineCount, nil
 }

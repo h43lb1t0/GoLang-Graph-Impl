@@ -23,7 +23,7 @@ func webgraph() {
 // Main function with different tasks to uncomment and run
 func main() {
 
-	problem98()
+	//problem98()
 	webgraph()
 
 }
