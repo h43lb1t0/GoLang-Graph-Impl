@@ -78,14 +78,23 @@ func InitProblem98() *UnDirectedGraph {
 // The function includes progress tracking and time estimation.
 // Returns a pointer to the initialized DirectedGraph.
 func InitWebgraph() *DirectedGraph {
-	// for a sanity check:
-	//     count on the command line the number of edges and vertices by
-	// grep -E -v "^#" ~/Downloads/web-Google.txt | wc -l
-	// grep -E -v "^#" ~/Downloads/web-Google.txt | sed -E 's/([[:digit:]]+)[[:space:]]+([[:digit:]]+).*/\1\n\2/' | sort | uniq | wc -l
-
 	webgraph := DirectedGraph{}
 
-	file, _ := os.Open("./testdata/web-Google.txt")
+	// Get the absolute path to the testdata directory
+	wd, err := os.Getwd()
+	if err != nil {
+		panic("Could not get working directory")
+	}
+	// If we're in the tests directory, go up one level
+	if filepath.Base(wd) == "tests" {
+		wd = filepath.Dir(wd)
+	}
+	filepath := filepath.Join(wd, "testdata", "web-Google.txt")
+
+	file, err := os.Open(filepath)
+	if err != nil {
+		panic(fmt.Sprintf("Could not open file %s: %v", filepath, err))
+	}
 	defer file.Close()
 
 	fmt.Println("reading file")
@@ -95,12 +104,24 @@ func InitWebgraph() *DirectedGraph {
 	start := time.Now()
 	for scanner.Scan() {
 		s := scanner.Text()
-		fields := strings.Fields(s)
-		if !strings.HasPrefix((fields[0][0:1]), "#") && len(fields) == 2 {
-			webgraph.AddVertex(fields[0])
-			webgraph.AddVertex(fields[1])
-			webgraph.AddDirectedEdge(fields[0], fields[1], 1.)
+		// Skip comment lines and empty lines
+		if strings.HasPrefix(s, "#") || strings.TrimSpace(s) == "" {
+			continue
 		}
+		fields := strings.Fields(s)
+		if len(fields) != 2 {
+			continue
+		}
+
+		// Only add vertices if they don't exist
+		if !webgraph.containsVertex(webgraph.vertices, fields[0]) {
+			webgraph.AddVertex(fields[0])
+		}
+		if !webgraph.containsVertex(webgraph.vertices, fields[1]) {
+			webgraph.AddVertex(fields[1])
+		}
+		webgraph.AddDirectedEdge(fields[0], fields[1], 1.)
+
 		if (i % 1000000) == 0 {
 			elapsed := time.Since(start)
 			fmt.Printf("last took %s\n", elapsed)
