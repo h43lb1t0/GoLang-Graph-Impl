@@ -223,45 +223,73 @@ func (graph *Graph) PrintVisited(visited map[string]bool) {
 // Dijkstra performs Dijkstra's shortest path algorithm starting from the given node.
 // Returns a map of node IDs to their distances from the start node.
 // The distance represents the length of the shortest path.
-func (graph *Graph) Dijkstra(start string) map[string]float64 {
-	if !graph.containsVertex(graph.vertices, start) {
-		fmt.Printf("Start node %v does not exist\n", start)
-		return nil
+func (graph *Graph) Dijkstra(startNodeId string) map[string]float64 {
+	if graph.getVertex(startNodeId) == nil {
+		fmt.Printf("start node %q does not exist in the graph", startNodeId)
 	}
 
 	distances := make(map[string]float64)
-	visited := make(map[string]bool)
+	visited := make(map[string]bool) // Tracks nodes whose shortest path is finalized
 
-	// Initialize distances to infinity and visited to false
+	// Initialize distances: Inf for all, 0 for startNodeId.
 	for _, vertex := range graph.vertices {
 		distances[vertex.key] = math.Inf(1)
-		visited[vertex.key] = false
 	}
+	distances[startNodeId] = 0
 
-	// Set start node distance to 0
-	distances[start] = 0
-
-	// Create and initialize min heap
-	heap := newMinHeap(graph.NumVertices())
-	heap.enqueue(&HeapNode{NodeId: start, Distance: 0})
+	// Create and initialize min heap.
+	pq := NewMinHeap(graph.NumVertices())
+	pq.Enqueue(&HeapNode{NodeId: startNodeId, Distance: 0})
 
 	// Main Dijkstra loop
-	for len(heap.nodes) > 0 {
-		minHeapNode := heap.dequeue()
-		currentNode := minHeapNode.NodeId
+	for !pq.IsEmpty() {
+		// Extract node with the smallest distance from the priority queue.
+		minNode := pq.Dequeue()
+		u_id := minNode.NodeId
+		// u_distance := minNode.Distance // This is distances[u_id]
 
-		if !visited[currentNode] {
-			visited[currentNode] = true
+		// If u has already been finalized, skip (shouldn't happen often with decreaseKey).
+		if visited[u_id] {
+			fmt.Printf("Node %s is already added", u_id)
+			continue
+		}
+		visited[u_id] = true // Mark u as finalized.
 
-			// Process all adjacent vertices
-			for _, edge := range graph.getVertex(currentNode).adjacent {
-				neighbor := edge.vertex.key
-				if !visited[neighbor] {
-					newDistance := distances[currentNode] + edge.length
-					if newDistance < distances[neighbor] {
-						distances[neighbor] = newDistance
-						heap.enqueue(&HeapNode{NodeId: neighbor, Distance: newDistance})
+		u_vertex := graph.getVertex(u_id)
+		// This check is more for internal consistency; u_id came from the graph.
+		if u_vertex == nil {
+			fmt.Printf("internal error: dequeued node %s not found via getVertex", u_id)
+		}
+
+		// Process all adjacent vertices (neighbors) of u.
+		for _, edge := range u_vertex.adjacent {
+			v_id := edge.vertex.key
+			weight_uv := edge.length
+
+			// If v is already finalized, we can't find a shorter path to it through u.
+			if visited[v_id] {
+				continue
+			}
+
+			// Relax edge (u,v):
+			// If a shorter path to v is found through u.
+			if distances[u_id]+weight_uv < distances[v_id] {
+				newDistanceToV := distances[u_id] + weight_uv
+				distances[v_id] = newDistanceToV
+
+				if pq.Contains(v_id) {
+					// v is already in the priority queue, update its distance.
+					err := pq.DecreaseKey(v_id, newDistanceToV)
+					if err != nil {
+						// This might indicate an issue with heap logic or unexpected state.
+						// For example, if newDistanceToV was not actually smaller than
+						// the value stored *within the heap structure itself* for v_id.
+						// This shouldn't happen if distances map and heap are consistent.
+						fmt.Printf("Dijkstra: Info/Warning from decreaseKey for %s: %v\n", v_id, err)
 					}
+				} else {
+					// v is not in the priority queue, add it.
+					pq.Enqueue(&HeapNode{NodeId: v_id, Distance: newDistanceToV})
 				}
 			}
 		}

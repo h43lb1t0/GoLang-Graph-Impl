@@ -1,6 +1,9 @@
 package main
 
-import "AbgabeAlgo/graph"
+import (
+	"AbgabeAlgo/graph"
+	"fmt"
+)
 
 // Print the shortest path from the task
 func problem98Challange() {
@@ -14,6 +17,22 @@ func problem98Challange() {
 	}
 }
 
+func problem98test() {
+	graph := graph.InitProblem98test()
+	graph.PrintDijkstraDistances("1")
+	//graph.PrintAdjacent()
+}
+
+func problem98testDFS() {
+	graph := graph.InitProblem98test()
+
+	result := graph.DFS("1")
+
+	for k, v := range result {
+		fmt.Printf("Node %s: %v\n", k, v)
+	}
+}
+
 // Print the shortest path from the webgraph
 func webgraph() {
 	graph := graph.InitWebgraph()
@@ -24,6 +43,8 @@ func webgraph() {
 func main() {
 
 	//problem98Challange()
+	//problem98test()
+	//problem98testDFS()
 	webgraph()
 
 }
