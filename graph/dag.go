@@ -11,7 +11,6 @@ type DAG struct {
 // TopoSort performs a topological sort on the DAG and returns a map where:
 // - Keys are vertex identifiers
 // - Values are their topological ordering (1 to n, where n is the number of vertices)
-// The ordering represents a linear ordering of vertices where all edges point forward.
 func (graph *DAG) TopoSort() map[string]int {
 	curLabel := graph.NumVertices()
 	ordering := make(map[string]int)
@@ -28,7 +27,7 @@ func (graph *DAG) TopoSort() map[string]int {
 	return ordering
 }
 
-// DfsTopoSort is a helper function that performs a depth-first search to build the topological ordering.
+// DfsTopoSort is a helper function (for TopoSort) that performs a depth-first search to build the topological ordering.
 // It recursively visits all unvisited neighbors of a vertex and assigns topological labels in reverse order.
 // Parameters:
 //   - vertex: The current vertex being processed
@@ -52,20 +51,17 @@ func (graph *DAG) DfsTopoSort(vertex *Vertex, visited map[string]bool, curLabel 
 func (graph *DAG) PrintTopoSort() {
 	ordering := graph.TopoSort()
 
-	// Create a slice to store vertices and their orders
 	type vertexOrder struct {
 		vertex string
 		order  int
 	}
 	orderedVertices := make([]vertexOrder, 0, len(ordering))
 
-	// Convert map to slice for sorting
 	for vertex, order := range ordering {
 		orderedVertices = append(orderedVertices, vertexOrder{vertex, order})
 	}
 
-	// Sort by topological order
-	for i := 0; i < len(orderedVertices)-1; i++ {
+	for i := range len(orderedVertices) - 1 {
 		for j := i + 1; j < len(orderedVertices); j++ {
 			if orderedVertices[i].order > orderedVertices[j].order {
 				orderedVertices[i], orderedVertices[j] = orderedVertices[j], orderedVertices[i]
@@ -73,7 +69,6 @@ func (graph *DAG) PrintTopoSort() {
 		}
 	}
 
-	// Print in order
 	fmt.Println("Topological Sort:")
 	for _, vo := range orderedVertices {
 		fmt.Printf("%v: %v\n", vo.vertex, vo.order)

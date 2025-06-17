@@ -3,11 +3,9 @@ package graph
 import "fmt"
 
 // UnDirectedGraph represents an undirected graph data structure.
-// It extends the base Graph type and maintains an additional edgeMap
-// for O(1) edge lookups between vertices.
+// It extends the base Graph type
 type UnDirectedGraph struct {
 	Graph
-	edgeMap map[string]map[string]float64 // Map for O(1) edge lookups: from -> to -> length
 }
 
 // AddUndirectedEdge adds an undirected edge between two vertices with the specified length.
@@ -23,7 +21,7 @@ func (graph *UnDirectedGraph) AddUndirectedEdge(nodeId1, nodeId2 string, length 
 		graph.edgeMap = make(map[string]map[string]float64)
 	}
 
-	if graph.containsVertex(graph.vertices, nodeId1) && graph.containsVertex(graph.vertices, nodeId2) {
+	if graph.containsVertex(nodeId1) && graph.containsVertex(nodeId2) {
 		fromVertex := graph.getVertex(nodeId1)
 		toVertex := graph.getVertex(nodeId2)
 
@@ -61,7 +59,7 @@ func (graph *UnDirectedGraph) UCC() map[string]int {
 	for _, v := range graph.vertices {
 		if components[v.key] == 0 {
 			visited := make(map[string]bool) // Create a new visited map for each BFS call
-			graph.BFS_intern(v.key, visited)
+			graph.bfs_intern(v.key, visited)
 
 			for k := range visited {
 				if components[k] == 0 {

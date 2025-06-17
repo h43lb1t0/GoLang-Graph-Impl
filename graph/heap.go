@@ -11,7 +11,7 @@ type HeapNode struct {
 }
 
 // MinHeap implements a binary min heap data structure.
-// It now includes a map to track node positions for efficient decreaseKey operations.
+// It includes a map to track node positions for decreaseKey operations.
 type MinHeap struct {
 	nodes     []*HeapNode
 	positions map[string]int // Maps NodeId to its index in the 'nodes' slice
@@ -117,7 +117,6 @@ func (h *MinHeap) Contains(nodeId string) bool {
 }
 
 // DecreaseKey updates the distance of a node already in the heap and adjusts its position.
-// It's crucial that newDistance is actually smaller than the current distance.
 func (h *MinHeap) DecreaseKey(nodeId string, newDistance float64) error {
 	index, exists := h.positions[nodeId]
 	if !exists {

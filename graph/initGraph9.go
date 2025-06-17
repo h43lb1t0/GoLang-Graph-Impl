@@ -9,14 +9,12 @@ import (
 	"strings"
 )
 
-// initGraph9 initializes an undirected graph from a file with a specific format.
-// The file should contain lines where each line represents a vertex and its edges.
+// initGraph9 initializes an undirected graph from a file.
 // Format: vertex_id edge1_id,weight1 edge2_id,weight2 ...
 // Returns a pointer to the initialized UnDirectedGraph.
 func initGraph9(filename string) *UnDirectedGraph {
 	graph := &UnDirectedGraph{}
 
-	// Count total lines first
 	totalLines, err := countLines(filename)
 	if err != nil {
 		panic(fmt.Sprintf("Can't count lines in file %s: %v", filename, err))
@@ -41,10 +39,10 @@ func initGraph9(filename string) *UnDirectedGraph {
 		id1 := fields[0]
 		graph.AddVertex(id1)
 		for _, x := range fields[1:] {
-			f := strings.Split(x, ",") // f[0]:id2 ,,
-			var length float64         //edgeLength
+			f := strings.Split(x, ",")
+			var length float64
 			if l, err := strconv.ParseFloat(f[1], 64); err == nil {
-				length = l //edgeLength{float64: l}
+				length = l
 			} else {
 				panic("convert str2float failed!")
 			}
@@ -73,7 +71,8 @@ func InitProblem98test() *UnDirectedGraph {
 	if err != nil {
 		panic("Could not get working directory")
 	}
-	// If we're in the tests directory, go up one level
+
+	// This is to ensure the path is correct when running tests
 	if filepath.Base(wd) == "tests" {
 		wd = filepath.Dir(wd)
 	}
@@ -92,8 +91,6 @@ func InitProblem98() *UnDirectedGraph {
 }
 
 // InitWebgraph initializes a directed graph from the Google web graph dataset.
-// The dataset should be in the format of "testdata/web-Google.txt".
-// Each line represents a directed edge from source to target vertex.
 // The function includes progress tracking and time estimation.
 // Returns a pointer to the initialized DirectedGraph.
 func InitWebgraph() *DirectedGraph {
@@ -104,13 +101,12 @@ func InitWebgraph() *DirectedGraph {
 	if err != nil {
 		panic("Could not get working directory")
 	}
-	// If we're in the tests directory, go up one level
+	// This is to ensure the path is correct when running tests
 	if filepath.Base(wd) == "tests" {
 		wd = filepath.Dir(wd)
 	}
 	filepath := filepath.Join(wd, "testdata", "web-Google.txt")
 
-	// Count total lines first
 	totalLines, err := countLines(filepath)
 	if err != nil {
 		panic(fmt.Sprintf("Could not count lines in file %s: %v", filepath, err))
@@ -138,13 +134,8 @@ func InitWebgraph() *DirectedGraph {
 
 		validLines++
 
-		// Only add vertices if they don't exist
-		if !webgraph.containsVertex(webgraph.vertices, fields[0]) {
-			webgraph.AddVertex(fields[0])
-		}
-		if !webgraph.containsVertex(webgraph.vertices, fields[1]) {
-			webgraph.AddVertex(fields[1])
-		}
+		webgraph.AddVertex(fields[0])
+		webgraph.AddVertex(fields[1])
 		webgraph.AddDirectedEdge(fields[0], fields[1], 1.)
 
 		// Print percentage progress every 5% or every 50,000 valid lines

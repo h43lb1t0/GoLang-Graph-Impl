@@ -8,10 +8,11 @@ import (
 )
 
 // Graph represents a graph using an adjacency list representation.
-// It maintains a list of vertices and a map for O(1) vertex lookups.
+// It maintains a list of vertices, a map for O(1) vertex lookups and a map for O(1) edge lookups.
 type Graph struct {
 	vertices  []*Vertex
-	vertexMap map[string]*Vertex // Map for O(1) vertex lookups
+	vertexMap map[string]*Vertex            // Map for O(1) vertex lookups
+	edgeMap   map[string]map[string]float64 // Map for O(1) edge lookups: from -> to -> length
 }
 
 // Edge represents a connection between two vertices with an associated length/weight.
@@ -47,7 +48,7 @@ func (graph *Graph) AddVertex(key string) {
 
 // containsVertex checks if a vertex with the given key exists in the graph.
 // Returns true if the vertex exists, false otherwise.
-func (graph *Graph) containsVertex(s []*Vertex, k string) bool {
+func (graph *Graph) containsVertex(k string) bool {
 	if graph.vertexMap == nil {
 		return false
 	}
@@ -102,10 +103,6 @@ func (graph *Graph) NumEdges() int {
 	return count
 }
 
-/* func (graph *Graph) IsDirected() bool {
-
-} */
-
 // BFS performs a breadth-first search starting from the given node.
 // Returns a map of node IDs to their distances from the start node.
 // The distance represents the number of edges in the shortest path.
@@ -114,16 +111,14 @@ func (graph *Graph) BFS(nodeId string) map[string]int {
 	for _, v := range graph.vertices {
 		visited[v.key] = false
 	}
-	return graph.BFS_intern(nodeId, visited)
+	return graph.bfs_intern(nodeId, visited)
 }
 
-// BFS_intern is the internal implementation of BFS that takes a visited map.
+// bfs_intern is the internal implementation of BFS that takes a visited map.
 // Returns a map of node IDs to their distances from the start node.
-func (graph *Graph) BFS_intern(nodeId string, visited map[string]bool) map[string]int {
+func (graph *Graph) bfs_intern(nodeId string, visited map[string]bool) map[string]int {
 
-	//fmt.Println("BFS:")
-
-	if !graph.containsVertex(graph.vertices, nodeId) {
+	if !graph.containsVertex(nodeId) {
 		fmt.Printf("Node %v does not exist\n", nodeId)
 		return nil
 	}
@@ -132,18 +127,17 @@ func (graph *Graph) BFS_intern(nodeId string, visited map[string]bool) map[strin
 
 	visited[nodeId] = true
 
-	// a new queue
 	queue := make([]*Vertex, 0)
 
-	// while the queue is not empty
 	queue = append(queue, graph.getVertex(nodeId))
 	distances[nodeId] = 0
 	for len(queue) > 0 {
-
 		// remove the first element from the queue
 		v := queue[0]
 		queue = queue[1:]
 
+		// Process all unvisited neighbors, adding them to the queue
+		// and setting their distance to be one more than the current vertex
 		for _, w := range v.adjacent {
 			if !visited[w.vertex.key] {
 				queue = append(queue, w.vertex)
@@ -160,11 +154,10 @@ func (graph *Graph) BFS_intern(nodeId string, visited map[string]bool) map[strin
 // DFS performs a depth-first search starting from the given node.
 // Returns a map of node IDs to boolean values indicating if they were visited.
 func (graph *Graph) DFS(nodeId string) map[string]bool {
-	//fmt.Println("DFS:")
 
 	visited := make(map[string]bool)
 
-	if !graph.containsVertex(graph.vertices, nodeId) {
+	if !graph.containsVertex(nodeId) {
 		fmt.Printf("Node %v does not exist\n", nodeId)
 		return nil
 	}
@@ -204,14 +197,6 @@ func (graph *Graph) PrintAdjacent() {
 	fmt.Println()
 }
 
-// PrintDistances prints the distances from a start node to all other nodes.
-func (graph *Graph) PrintDistances(distances map[string]int) {
-	fmt.Println("Distances:")
-	for k, v := range distances {
-		fmt.Printf("Node %v: %v\n", k, v)
-	}
-}
-
 // PrintVisited prints the visited status of all nodes after a traversal.
 func (graph *Graph) PrintVisited(visited map[string]bool) {
 	fmt.Println("Visited:")
@@ -220,7 +205,7 @@ func (graph *Graph) PrintVisited(visited map[string]bool) {
 	}
 }
 
-// Dijkstra performs Dijkstra's shortest path algorithm starting from the given node.
+// Dijkstra performs Dijkstra's shortest path algorithm starting from the given node to all other nodes.
 // Returns a map of node IDs to their distances from the start node.
 // The distance represents the length of the shortest path.
 func (graph *Graph) Dijkstra(startNodeId string) map[string]float64 {
@@ -229,9 +214,8 @@ func (graph *Graph) Dijkstra(startNodeId string) map[string]float64 {
 	}
 
 	distances := make(map[string]float64)
-	visited := make(map[string]bool) // Tracks nodes whose shortest path is finalized
+	visited := make(map[string]bool) // Tracks nodes whose shortest path is found
 
-	// Initialize distances: Inf for all, 0 for startNodeId.
 	for _, vertex := range graph.vertices {
 		distances[vertex.key] = math.Inf(1)
 	}
@@ -243,54 +227,31 @@ func (graph *Graph) Dijkstra(startNodeId string) map[string]float64 {
 
 	// Main Dijkstra loop
 	for !pq.IsEmpty() {
-		// Extract node with the smallest distance from the priority queue.
+
 		minNode := pq.Dequeue()
-		u_id := minNode.NodeId
-		// u_distance := minNode.Distance // This is distances[u_id]
+		currentVertexId := minNode.NodeId
 
-		// If u has already been finalized, skip (shouldn't happen often with decreaseKey).
-		if visited[u_id] {
-			fmt.Printf("Node %s is already added", u_id)
-			continue
-		}
-		visited[u_id] = true // Mark u as finalized.
+		visited[currentVertexId] = true // Mark currentVertex as finalized.
 
-		u_vertex := graph.getVertex(u_id)
-		// This check is more for internal consistency; u_id came from the graph.
-		if u_vertex == nil {
-			fmt.Printf("internal error: dequeued node %s not found via getVertex", u_id)
-		}
+		currentVertex := graph.getVertex(currentVertexId)
 
-		// Process all adjacent vertices (neighbors) of u.
-		for _, edge := range u_vertex.adjacent {
-			v_id := edge.vertex.key
-			weight_uv := edge.length
+		// Process all adjacent vertices (neighbors) of currentVertex.
+		for _, edge := range currentVertex.adjacent {
+			neighborId := edge.vertex.key
+			edgeWeight := edge.length
 
-			// If v is already finalized, we can't find a shorter path to it through u.
-			if visited[v_id] {
+			// If neighbor is already finalized, we can't find a shorter path to it through currentVertex.
+			if visited[neighborId] {
 				continue
 			}
 
-			// Relax edge (u,v):
-			// If a shorter path to v is found through u.
-			if distances[u_id]+weight_uv < distances[v_id] {
-				newDistanceToV := distances[u_id] + weight_uv
-				distances[v_id] = newDistanceToV
+			// Relax edge (currentVertex,neighbor):
+			// If a shorter path to neighbor is found through currentVertex.
+			if distances[currentVertexId]+edgeWeight < distances[neighborId] {
+				newDistanceToV := distances[currentVertexId] + edgeWeight
+				distances[neighborId] = newDistanceToV
 
-				if pq.Contains(v_id) {
-					// v is already in the priority queue, update its distance.
-					err := pq.DecreaseKey(v_id, newDistanceToV)
-					if err != nil {
-						// This might indicate an issue with heap logic or unexpected state.
-						// For example, if newDistanceToV was not actually smaller than
-						// the value stored *within the heap structure itself* for v_id.
-						// This shouldn't happen if distances map and heap are consistent.
-						fmt.Printf("Dijkstra: Info/Warning from decreaseKey for %s: %v\n", v_id, err)
-					}
-				} else {
-					// v is not in the priority queue, add it.
-					pq.Enqueue(&HeapNode{NodeId: v_id, Distance: newDistanceToV})
-				}
+				pq.Enqueue(&HeapNode{NodeId: neighborId, Distance: newDistanceToV})
 			}
 		}
 	}
@@ -298,7 +259,7 @@ func (graph *Graph) Dijkstra(startNodeId string) map[string]float64 {
 	return distances
 }
 
-// PrintDijkstraDistances prints the distances from a start node to all other nodes.
+// PrintDijkstraDistances runs Disjkstra and prints the distances from a start node to all other nodes.
 func (graph *Graph) PrintDijkstraDistances(start string) {
 	distances := graph.Dijkstra(start)
 	if distances != nil {
@@ -314,7 +275,8 @@ func (graph *Graph) PrintDijkstraDistances(start string) {
 	}
 }
 
-// PrintDijkstraFromTo prints the shortest path distance between two specific nodes.
+// PrintDijkstraFromTo runs Disjkstra and prints the shortest path distance between two specific nodes
+// by filtering the distances map returned by Dijkstra.
 // If no path exists, it prints "NO PATH". If the nodes don't exist, it prints nothing.
 func (graph *Graph) PrintDijkstraFromTo(start string, end string) {
 	distances := graph.Dijkstra(start)

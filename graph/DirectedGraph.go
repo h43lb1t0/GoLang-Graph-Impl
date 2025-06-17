@@ -5,11 +5,9 @@ import (
 )
 
 // DirectedGraph represents a directed graph data structure where edges have a specific direction
-// from one vertex to another. It extends the base Graph type and maintains an additional
-// edgeMap for O(1) edge lookups.
+// from one vertex to another. It extends the base Graph type.
 type DirectedGraph struct {
 	Graph
-	edgeMap map[string]map[string]float64 // Map for O(1) edge lookups: from -> to -> length
 }
 
 // AddDirectedEdge adds a directed edge from nodeId1 to nodeId2 with the specified length.
@@ -25,7 +23,7 @@ func (graph *DirectedGraph) AddDirectedEdge(nodeId1, nodeId2 string, length floa
 		graph.edgeMap = make(map[string]map[string]float64)
 	}
 
-	if graph.containsVertex(graph.vertices, nodeId1) && graph.containsVertex(graph.vertices, nodeId2) {
+	if graph.containsVertex(nodeId1) && graph.containsVertex(nodeId2) {
 		fromVertex := graph.getVertex(nodeId1)
 		toVertex := graph.getVertex(nodeId2)
 
