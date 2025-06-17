@@ -5,6 +5,7 @@ import (
 	"testing"
 )
 
+// TestNewMinHeap tests the creation of a new min heap
 func TestNewMinHeap(t *testing.T) {
 	heap := graph.NewMinHeap(10)
 	if heap == nil {
@@ -15,6 +16,7 @@ func TestNewMinHeap(t *testing.T) {
 	}
 }
 
+// TestEnqueueDequeue tests the enqueue and dequeue operations of a min heap
 func TestEnqueueDequeue(t *testing.T) {
 	heap := graph.NewMinHeap(5)
 
@@ -96,6 +98,7 @@ func TestDecreaseKey(t *testing.T) {
 	}
 }
 
+// TestContains tests the contains operation of a min heap
 func TestContains(t *testing.T) {
 	heap := graph.NewMinHeap(2)
 
