@@ -20,7 +20,6 @@ func problem98Challange() {
 func problem98test() {
 	graph := graph.InitProblem98test()
 	graph.PrintDijkstraDistances("1")
-	//graph.PrintAdjacent()
 }
 
 func problem98testDFS() {
@@ -46,5 +45,4 @@ func main() {
 	//problem98test()
 	//problem98testDFS()
 	webgraph()
-
 }
