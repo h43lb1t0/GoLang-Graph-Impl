@@ -47,11 +47,35 @@ func (graph *DAG) DfsTopoSort(vertex *Vertex, visited map[string]bool, curLabel 
 }
 
 // PrintTopoSort prints the topological ordering of the DAG to stdout.
-// The output shows each vertex and its corresponding topological order.
+// The output shows each vertex and its corresponding topological order,
+// sorted by the topological order value (1 to n).
 func (graph *DAG) PrintTopoSort() {
 	ordering := graph.TopoSort()
+
+	// Create a slice to store vertices and their orders
+	type vertexOrder struct {
+		vertex string
+		order  int
+	}
+	orderedVertices := make([]vertexOrder, 0, len(ordering))
+
+	// Convert map to slice for sorting
+	for vertex, order := range ordering {
+		orderedVertices = append(orderedVertices, vertexOrder{vertex, order})
+	}
+
+	// Sort by topological order
+	for i := 0; i < len(orderedVertices)-1; i++ {
+		for j := i + 1; j < len(orderedVertices); j++ {
+			if orderedVertices[i].order > orderedVertices[j].order {
+				orderedVertices[i], orderedVertices[j] = orderedVertices[j], orderedVertices[i]
+			}
+		}
+	}
+
+	// Print in order
 	fmt.Println("Topological Sort:")
-	for k, v := range ordering {
-		fmt.Printf("%v: %v\n", k, v)
+	for _, vo := range orderedVertices {
+		fmt.Printf("%v: %v\n", vo.vertex, vo.order)
 	}
 }
