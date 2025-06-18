@@ -166,3 +166,61 @@ func TestDijkstraComplex(t *testing.T) {
 		t.Errorf("Dijkstra method error: expected %d distances, got %d", len(expectedDistances), len(distances))
 	}
 }
+
+func TestSuccessor(t *testing.T) {
+	graph := graph.DirectedGraph{}
+	graph.AddVertex("1")
+	graph.AddVertex("2")
+	graph.AddVertex("3")
+	graph.AddDirectedEdge("1", "2", 1.0)
+	graph.AddDirectedEdge("1", "3", 2.0)
+
+	successors := graph.Successor("1")
+	expectedSuccessors := []string{"2", "3"}
+
+	if len(successors) != len(expectedSuccessors) {
+		t.Errorf("Successor method error: expected %d successors, got %d", len(expectedSuccessors), len(successors))
+	}
+
+	for _, succ := range successors {
+		found := false
+		for _, expected := range expectedSuccessors {
+			if succ == expected {
+				found = true
+				break
+			}
+		}
+		if !found {
+			t.Errorf("Successor method error: unexpected successor %s", succ)
+		}
+	}
+}
+
+func TestPredecessor(t *testing.T) {
+	graph := graph.DirectedGraph{}
+	graph.AddVertex("1")
+	graph.AddVertex("2")
+	graph.AddVertex("3")
+	graph.AddDirectedEdge("1", "2", 1.0)
+	graph.AddDirectedEdge("2", "3", 2.0)
+
+	predecessors := graph.Predecessor("2")
+	expectedPredecessors := []string{"1"}
+
+	if len(predecessors) != len(expectedPredecessors) {
+		t.Errorf("Predecessor method error: expected %d predecessors, got %d", len(expectedPredecessors), len(predecessors))
+	}
+
+	for _, pred := range predecessors {
+		found := false
+		for _, expected := range expectedPredecessors {
+			if pred == expected {
+				found = true
+				break
+			}
+		}
+		if !found {
+			t.Errorf("Predecessor method error: unexpected predecessor %s", pred)
+		}
+	}
+}

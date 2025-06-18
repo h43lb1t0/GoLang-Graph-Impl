@@ -43,3 +43,32 @@ func (graph *DirectedGraph) AddDirectedEdge(nodeId1, nodeId2 string, length floa
 		fmt.Printf("One of the vertices does not exist\n")
 	}
 }
+
+func (graph *DirectedGraph) Successor(nodeId string) []string {
+	if graph.edgeMap == nil {
+		return nil
+	}
+
+	if successors, exists := graph.edgeMap[nodeId]; exists {
+		succList := make([]string, 0, len(successors))
+		for succ := range successors {
+			succList = append(succList, succ)
+		}
+		return succList
+	}
+	return nil
+}
+
+func (graph *DirectedGraph) Predecessor(nodeId string) []string {
+	if graph.edgeMap == nil {
+		return nil
+	}
+
+	predecessors := make([]string, 0)
+	for from, toMap := range graph.edgeMap {
+		if _, exists := toMap[nodeId]; exists {
+			predecessors = append(predecessors, from)
+		}
+	}
+	return predecessors
+}
