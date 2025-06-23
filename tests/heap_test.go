@@ -54,50 +54,6 @@ func TestEnqueueDequeue(t *testing.T) {
 	}
 }
 
-func TestDecreaseKey(t *testing.T) {
-	heap := graph.NewMinHeap(3)
-
-	// Add nodes
-	nodes := []*graph.HeapNode{
-		{NodeId: "A", Distance: 5.0},
-		{NodeId: "B", Distance: 3.0},
-		{NodeId: "C", Distance: 7.0},
-	}
-
-	for _, node := range nodes {
-		heap.Enqueue(node)
-	}
-
-	// Test valid decrease key
-	err := heap.DecreaseKey("C", 2.0)
-	if err != nil {
-		t.Errorf("Unexpected error in decreaseKey: %v", err)
-	}
-
-	// Verify new order after decrease key
-	expectedOrder := []string{"C", "B", "A"}
-	for _, expectedId := range expectedOrder {
-		node := heap.Dequeue()
-		if node.NodeId != expectedId {
-			t.Errorf("Expected node %s, got %s", expectedId, node.NodeId)
-		}
-	}
-
-	// Test decrease key on non-existent node
-	err = heap.DecreaseKey("X", 1.0)
-	if err == nil {
-		t.Error("Expected error when decreasing key of non-existent node")
-	}
-
-	// Test decrease key with larger value
-	heap = graph.NewMinHeap(1)
-	heap.Enqueue(&graph.HeapNode{NodeId: "A", Distance: 3.0})
-	err = heap.DecreaseKey("A", 4.0)
-	if err == nil {
-		t.Error("Expected error when new distance is larger than current distance")
-	}
-}
-
 // TestContains tests the contains operation of a min heap
 func TestContains(t *testing.T) {
 	heap := graph.NewMinHeap(2)
@@ -120,5 +76,51 @@ func TestContains(t *testing.T) {
 	heap.Dequeue()
 	if heap.Contains("A") {
 		t.Error("Contains should return false for dequeued node")
+	}
+}
+
+func TestUpdate(t *testing.T) {
+	heap := graph.NewMinHeap(4)
+	nodes := []*graph.HeapNode{
+		{NodeId: "A", Distance: 10.0},
+		{NodeId: "B", Distance: 20.0},
+		{NodeId: "C", Distance: 30.0},
+		{NodeId: "D", Distance: 40.0},
+	}
+	for _, node := range nodes {
+		heap.Enqueue(node)
+	}
+
+	// Decrease key: C from 30.0 to 5.0 (should move to root)
+	err := heap.Update("C", 5.0)
+	if err != nil {
+		t.Errorf("Unexpected error when decreasing key: %v", err)
+	}
+	node := heap.Dequeue()
+	if node.NodeId != "C" {
+		t.Errorf("Expected C to be at root after decrease, got %s", node.NodeId)
+	}
+
+	// Increase key: A from 10.0 to 50.0 (should move to bottom)
+	err = heap.Update("A", 50.0)
+	if err != nil {
+		t.Errorf("Unexpected error when increasing key: %v", err)
+	}
+	// B should now be at root
+	node = heap.Dequeue()
+	if node.NodeId != "B" {
+		t.Errorf("Expected B to be at root after increasing A, got %s", node.NodeId)
+	}
+
+	// Update with same value: D from 40.0 to 40.0 (should not change position)
+	err = heap.Update("D", 40.0)
+	if err != nil {
+		t.Errorf("Unexpected error when updating with same value: %v", err)
+	}
+
+	// Update non-existent node
+	err = heap.Update("X", 100.0)
+	if err == nil {
+		t.Error("Expected error when updating non-existent node, got nil")
 	}
 }
