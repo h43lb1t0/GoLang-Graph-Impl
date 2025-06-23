@@ -251,7 +251,16 @@ func (graph *Graph) Dijkstra(startNodeId string) map[string]float64 {
 				newDistanceToV := distances[currentVertexId] + edgeWeight
 				distances[neighborId] = newDistanceToV
 
-				pq.Enqueue(&HeapNode{NodeId: neighborId, Distance: newDistanceToV})
+				if pq.Contains(neighborId) {
+					// Update the distance in the heap
+					err := pq.Update(neighborId, newDistanceToV)
+					if err != nil {
+						// Should not happen, but print for debugging
+						fmt.Printf("DecreaseKey error: %v\n", err)
+					}
+				} else {
+					pq.Enqueue(&HeapNode{NodeId: neighborId, Distance: newDistanceToV})
+				}
 			}
 		}
 	}

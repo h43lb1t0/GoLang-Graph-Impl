@@ -116,22 +116,25 @@ func (h *MinHeap) Contains(nodeId string) bool {
 	return exists
 }
 
-// DecreaseKey updates the distance of a node already in the heap and adjusts its position.
-func (h *MinHeap) DecreaseKey(nodeId string, newDistance float64) error {
+// UpdateGeneral updates the distance of a node already in the heap and adjusts its position.
+// It can handle both decreases (requiring a shift up) and increases (requiring a shift down) of the distance.
+func (h *MinHeap) Update(nodeId string, newDistance float64) error {
 	index, exists := h.positions[nodeId]
 	if !exists {
-		return fmt.Errorf("node %s not found in heap for decreaseKey", nodeId)
+		return fmt.Errorf("node %s not found in heap for update", nodeId)
 	}
 
-	// This check ensures we are actually "decreasing" the key.
-	// If Dijkstra's algorithm is correct, this condition (newDistance >= current)
-	// should ideally not be met when decreaseKey is called.
-	if newDistance >= h.nodes[index].Distance {
-		return fmt.Errorf("new distance %.2f for node %s is not smaller than current distance %.2f",
-			newDistance, nodeId, h.nodes[index].Distance)
-	}
-
+	oldDistance := h.nodes[index].Distance
 	h.nodes[index].Distance = newDistance
-	h.shiftUp(index) // After decreasing a key, the node might need to move up.
+
+	if newDistance < oldDistance {
+		// New distance is smaller, so the node might need to move up.
+		h.shiftUp(index)
+	} else if newDistance > oldDistance {
+		// New distance is larger, so the node might need to move down.
+		h.shiftDown(index)
+	}
+	// If newDistance == oldDistance, no heap adjustment is needed.
+
 	return nil
 }
